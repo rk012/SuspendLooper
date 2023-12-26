@@ -41,13 +41,17 @@ class Looper {
     }
 
     /**
-     * Schedules a coroutine to run on the looper.
+     * Schedules a coroutine to run on the looper with an optional [CoroutineContext].
      *
      * This can be called before the looper starts or while the looper is running. Other running coroutines can also
      * schedule new coroutines.
      */
-    fun scheduleCoroutine(action: suspend CoroutineScope.() -> Unit): Job {
-        val job = looperScope.launch(start = CoroutineStart.LAZY) { action() }
+    fun scheduleCoroutine(context: CoroutineContext = EmptyCoroutineContext, action: suspend CoroutineScope.() -> Unit): Job {
+        val job = looperScope.launch(start = CoroutineStart.LAZY) {
+            withContext(context + coroutineContext) {
+                action()
+            }
+        }
 
         object : Continuation<Unit> {
             override val context = looperScope.coroutineContext

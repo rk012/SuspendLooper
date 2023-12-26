@@ -2,10 +2,7 @@ package com.outoftheboxrobotics.suspendftc
 
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.assertThrows
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 internal fun runLooper(looper: Looper, timeout: Long = 50) = runBlocking { withTimeout(timeout) { looper.run() } }
 
@@ -38,6 +35,24 @@ class LooperTest {
         looper.scheduleCoroutine {
             looper.cancel()
             assertEquals(looper, coroutineContext[Looper.LooperContext]?.looper)
+        }
+
+        runLooper(looper)
+    }
+
+    @Test
+    fun looperCustomContextTest() {
+        val looper = Looper()
+
+        val job = looper.scheduleCoroutine(CoroutineName("foo")) {
+            suspendFor(20)
+            assertEquals("foo", coroutineContext[CoroutineName]?.name)
+        }
+
+        looper.scheduleCoroutine {
+            job.join()
+            looper.cancel()
+            assertNull(coroutineContext[CoroutineName]?.name)
         }
 
         runLooper(looper)
